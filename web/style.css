@@ -371,6 +371,67 @@ a.big-btn:hover { filter: brightness(1.1); }
 .locked-box p { line-height: 1.9; }
 .locked-box .hint { color: var(--muted); font-size: 13px; }
 
+/* ---------------- 任务栏 ---------------- */
+.mission-bar {
+  max-width: 1200px;
+  margin: 14px auto 0;
+  padding: 10px 16px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  background: rgba(224, 164, 88, .06);
+  font-size: 13.5px;
+  line-height: 1.7;
+}
+
+/* ---------------- 案情简报 ---------------- */
+.briefing-box {
+  width: min(640px, 92vw);
+  text-align: left;
+  max-height: 88vh;
+  overflow-y: auto;
+}
+.briefing-meta {
+  color: var(--muted);
+  font-size: 13px;
+  border-bottom: 1px dashed var(--line);
+  padding-bottom: 12px;
+}
+.briefing-text { white-space: pre-wrap; line-height: 1.95; }
+.briefing-box h3 { color: var(--accent); font-size: 14px; letter-spacing: 1px; margin: 22px 0 8px; }
+.briefing-list { margin: 0; padding-left: 18px; line-height: 1.9; font-size: 14px; white-space: normal; }
+.briefing-list.suspects { list-style: none; padding-left: 0; }
+.briefing-list.suspects li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 12px;
+  margin-bottom: 6px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-2);
+}
+.briefing-list.suspects li b { color: var(--accent); }
+.briefing-list.suspects li span { color: var(--muted); font-size: 13px; }
+.briefing-mission {
+  margin-top: 22px;
+  padding: 12px 14px;
+  border: 1px dashed var(--accent);
+  border-radius: 10px;
+  background: rgba(224, 164, 88, .08);
+  color: var(--accent);
+  white-space: normal;
+  line-height: 1.8;
+  font-size: 14px;
+}
+.rules .goal {
+  padding: 10px 12px;
+  border-left: 3px solid var(--accent);
+  background: rgba(224, 164, 88, .07);
+  border-radius: 6px;
+  color: var(--text);
+}
+
 /* 档案 / 玩法说明 */
 .profile-box { text-align: left; }
 .profile-box h2 { text-align: center; }

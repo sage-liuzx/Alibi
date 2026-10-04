@@ -58,12 +58,45 @@ async function api(path, body) {
 async function init() {
   const state = await api("/api/state");
   document.getElementById("case-summary").textContent =
-    state.case.title + "　" + state.case.summary + "　案发时间：" + state.case.time;
+    state.case.title + "　" + state.case.summary;
   notebook = state.notebook || [];
+  renderBriefing(state);
   renderStageLink(state.cleared);
   renderTabs();
   renderScene(currentScene);
   renderNotebook();
+
+  // 第一次进来先看案情，之后靠顶栏「案情」按钮随时回看
+  if (!localStorage.getItem("alibi_briefed")) showBriefing();
+}
+
+// ---------------- 案情简报 ----------------
+function renderBriefing(state) {
+  const c = state.case;
+  document.getElementById("briefing-meta").textContent =
+    c.title + "　|　案发时间：" + c.time;
+
+  document.getElementById("briefing-text").textContent = c.briefing;
+
+  document.getElementById("briefing-facts").innerHTML =
+    (c.facts || []).map((f) => `<li>${f}</li>`).join("");
+
+  document.getElementById("briefing-suspects").innerHTML =
+    (state.suspects || [])
+      .map((s) => `<li><b>${s.name}</b><span>${s.role}</span></li>`)
+      .join("");
+
+  document.getElementById("briefing-mission").textContent = "🎯 " + c.mission;
+  document.getElementById("mission-bar").textContent = "🎯 " + c.mission;
+}
+
+function showBriefing() {
+  document.getElementById("briefing").classList.remove("hidden");
+}
+
+function closeBriefing() {
+  document.getElementById("briefing").classList.add("hidden");
+  localStorage.setItem("alibi_briefed", "1");
 }
 
 // 第二关的锁：指认对真凶 + 拿出决定性证据之后才解开

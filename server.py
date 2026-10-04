@@ -66,6 +66,9 @@ def api_state(session):
             "title": world.CASE["title"],
             "summary": world.CASE["summary"],
             "time": world.CASE["time"],
+            "briefing": world.CASE["briefing"],
+            "facts": world.CASE["facts"],
+            "mission": world.CASE["mission"],
         },
         "suspects": [
             {"name": name, "role": person["role"]}

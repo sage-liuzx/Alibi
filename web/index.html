@@ -15,10 +15,13 @@
     </div>
     <div class="topbar-right">
       <a class="ghost link locked" id="stage2-link" href="/detective.html">🔒 第二关 · 你是真凶</a>
+      <button class="ghost" onclick="showBriefing()">📁 案情</button>
       <button class="ghost" onclick="showHelp()">❓ 怎么玩</button>
       <span class="clock">🕐 06-12 凌晨</span>
     </div>
   </header>
+
+  <div id="mission-bar" class="mission-bar"></div>
 
   <nav class="scene-tabs" id="scene-tabs"></nav>
 
@@ -67,14 +70,31 @@
     <div class="ending-box">
       <h2>🔎 怎么玩</h2>
       <div class="rules">
+        <p class="goal">🎯 <b>目标</b>：找出真凶，并拿出<b>决定性证据</b>。只指认对人是不够的。</p>
         <p><b>1.</b> 点顶部标签切换<b>场景</b>。</p>
         <p><b>2.</b> 点场景里的黄色光点<b>搜证</b>，线索会自动进笔记本。</p>
         <p><b>3.</b> 审讯室里点<b>「档案」</b>看人物背景，点<b>「盘问」</b>开始对话。</p>
         <p><b>4.</b> 盘问时提到笔记本里的证据，对方才会动摇。</p>
         <p class="warn">⚠️ 没搜到的证据，光靠猜是没用的。</p>
         <p><b>5.</b> 证据够了，点<b>「指认」</b>→ 结局。</p>
+        <p><b>6.</b> 破案后解锁<b>第二关</b> —— 换你坐上嫌疑人的椅子。</p>
       </div>
       <button onclick="document.getElementById('help').classList.add('hidden')">知道了</button>
+    </div>
+  </div>
+
+  <!-- 案情简报 -->
+  <div id="briefing" class="modal hidden">
+    <div class="ending-box briefing-box">
+      <h2>📁 案情简报</h2>
+      <p id="briefing-meta" class="briefing-meta"></p>
+      <p id="briefing-text" class="briefing-text"></p>
+      <h3>已知情况</h3>
+      <ul id="briefing-facts" class="briefing-list"></ul>
+      <h3>嫌疑人（4）</h3>
+      <ul id="briefing-suspects" class="briefing-list suspects"></ul>
+      <p id="briefing-mission" class="briefing-mission"></p>
+      <button class="big" onclick="closeBriefing()">开始调查 →</button>
     </div>
   </div>
 
