@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI 侦探模式 · 你是嫌疑人</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+  <header class="topbar">
+    <div>
+      <h1>🤖 AI 侦探模式</h1>
+      <p>这次 <b>agent 是侦探</b>，<b>你是真凶</b>。它自己决定问什么、查什么。</p>
+    </div>
+    <div class="topbar-right">
+      <a class="ghost link" href="/">← 回到侦探游戏</a>
+    </div>
+  </header>
+
+  <!-- 阶段 1：准备 -->
+  <section id="prep" class="det-wrap">
+    <pre id="brief" class="brief"></pre>
+    <h2>选择掩盖手段　剩余 <span id="prep-points" class="pts">3</span> 次</h2>
+    <p class="hint">⚠️ 每次篡改都会留下审计痕迹 —— 侦探可能发现，并从备份恢复数据。想清楚再动手。</p>
+    <div id="prep-actions" class="action-grid"></div>
+    <div id="prep-log" class="prep-log"></div>
+    <button id="begin-btn" class="big" onclick="beginInterrogation()">接受审讯 →</button>
+  </section>
+
+  <!-- 阶段 2：审讯 -->
+  <section id="session" class="det-wrap hidden">
+    <div class="det-layout">
+      <div class="det-main">
+        <h2>🔍 侦探的调查（实时）</h2>
+        <div id="timeline" class="det-timeline"></div>
+      </div>
+      <aside class="det-side">
+        <h2>🕶️ 你的手段　剩余 <span id="session-points" class="pts">3</span> 次</h2>
+        <div id="session-actions" class="action-grid vertical"></div>
+      </aside>
+    </div>
+    <div id="answer-bar" class="answer-bar hidden">
+      <div id="question" class="question"></div>
+      <div class="answer-input">
+        <input id="answer-input" placeholder="编一个说法……"
+               onkeydown="if(event.key==='Enter') sendAnswer()">
+        <button onclick="sendAnswer()">回答</button>
+      </div>
+    </div>
+    <div id="continue-bar" class="continue-bar hidden">
+      <span>侦探暂时停下。你可以抢着掩盖，或让他继续。</span>
+      <button onclick="continueDetective()">让侦探继续 →</button>
+    </div>
+    <div id="waiting" class="waiting hidden">🕵️ 侦探正在思考……</div>
+  </section>
+
+  <div id="ending" class="modal hidden">
+    <div class="ending-box">
+      <h2 id="ending-title"></h2>
+      <p id="ending-text"></p>
+      <button onclick="restart()">再来一局</button>
+    </div>
+  </div>
+
+  <script src="/detective.js"></script>
+</body>
+</html>

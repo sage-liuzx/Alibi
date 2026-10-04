@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI 侦探 · Helios 数据失窃案</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+  <header class="topbar">
+    <div>
+      <h1 id="case-title">Helios 数据失窃案</h1>
+      <p id="case-summary"></p>
+    </div>
+    <div class="topbar-right">
+      <a class="ghost link" href="/detective.html">🤖 AI 侦探模式</a>
+      <button class="ghost" onclick="showHelp()">❓ 怎么玩</button>
+      <span class="clock">🕐 06-12 凌晨</span>
+    </div>
+  </header>
+
+  <nav class="scene-tabs" id="scene-tabs"></nav>
+
+  <main class="layout">
+    <section class="scene">
+      <div id="scene-view"></div>
+      <div id="findings" class="findings hidden"></div>
+    </section>
+
+    <aside class="notebook">
+      <h2>📓 笔记本 <span id="notebook-count"></span></h2>
+      <ul id="notebook-list"></ul>
+    </aside>
+  </main>
+
+  <!-- 盘问 -->
+  <div id="dialogue" class="modal hidden">
+    <div class="dialogue-box" id="dialogue-box">
+      <div class="dialogue-header">
+        <span id="dialogue-name"></span>
+        <button class="ghost" onclick="closeDialogue()">关闭 ✕</button>
+      </div>
+      <div id="dialogue-log" class="dialogue-log"></div>
+      <div class="dialogue-input">
+        <input id="dialogue-input" placeholder="问点什么……（提到笔记本里的证据才会生效）"
+               onkeydown="if(event.key==='Enter') sendMessage()">
+        <button onclick="sendMessage()">发送</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 人物档案 -->
+  <div id="profile" class="modal hidden">
+    <div class="ending-box profile-box">
+      <h2 id="profile-name"></h2>
+      <p id="profile-body"></p>
+      <div class="profile-actions">
+        <button onclick="talkFromProfile()">进入盘问</button>
+        <button class="ghost" onclick="closeProfile()">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 玩法说明 -->
+  <div id="help" class="modal hidden">
+    <div class="ending-box">
+      <h2>🔎 怎么玩</h2>
+      <div class="rules">
+        <p><b>1.</b> 点顶部标签切换<b>场景</b>。</p>
+        <p><b>2.</b> 点场景里的黄色光点<b>搜证</b>，线索会自动进笔记本。</p>
+        <p><b>3.</b> 审讯室里点<b>「档案」</b>看人物背景，点<b>「盘问」</b>开始对话。</p>
+        <p><b>4.</b> 盘问时提到笔记本里的证据，对方才会动摇。</p>
+        <p class="warn">⚠️ 没搜到的证据，光靠猜是没用的。</p>
+        <p><b>5.</b> 证据够了，点<b>「指认」</b>→ 结局。</p>
+      </div>
+      <button onclick="document.getElementById('help').classList.add('hidden')">知道了</button>
+    </div>
+  </div>
+
+  <!-- 结局 -->
+  <div id="ending" class="modal hidden">
+    <div class="ending-box">
+      <h2 id="ending-title"></h2>
+      <p id="ending-text"></p>
+      <button onclick="restart()">重新开始</button>
+    </div>
+  </div>
+
+  <script src="/game.js"></script>
+</body>
+</html>
