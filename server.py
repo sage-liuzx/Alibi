@@ -1,15 +1,17 @@
 """Web 版游戏后端（Python 标准库 http.server，零依赖）。
 
-复用已有 Agent Core：llm.py / npc.py / world.py / game.py
 启动：
     python3 server.py
-然后浏览器打开 http://localhost:8000  （端口可用 GAME_PORT 环境变量改）
+然后浏览器打开 http://localhost:8000 （端口可用 GAME_PORT 环境变量改）
 
-注意：这是"单局内存状态"，重启服务即重置，还没有存档。
+会话：每个浏览器一个独立会话（靠 cookie 里的 sid 区分），多人同时玩互不干扰。
+      会话只存在内存里，重启服务即清空。
 """
 
 import json
 import os
+import uuid
+from collections import OrderedDict
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import game
@@ -21,23 +23,43 @@ import world
 WEB_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web")
 PORT = int(os.environ.get("GAME_PORT", "8000"))
 
-# 单局状态：玩家笔记本 + 每个 NPC 的对话历史
-STATE = {"notebook": [], "conversations": {}}
-
-# AI 侦探模式的会话（agent 当侦探，玩家当嫌疑人）
-DETECTIVE = {"session": None}
+# 会话表：sid -> 会话状态。超过上限就丢最老的，防止内存无限增长。
+MAX_SESSIONS = 500
+SESSIONS = OrderedDict()
 
 
-def reset_state():
-    STATE["notebook"] = []
-    STATE["conversations"] = {}
-    DETECTIVE["session"] = None
+# ==================================================================
+# 会话管理
+# ==================================================================
+def new_session():
+    return {"notebook": [], "conversations": {}, "detective": None}
+
+
+def reset_session(session):
+    session["notebook"] = []
+    session["conversations"] = {}
+    session["detective"] = None
+
+
+def get_session(handler):
+    """从 cookie 取 sid；没有（或已过期）就新建一个。"""
+    sid = handler.get_cookie("sid")
+    if sid and sid in SESSIONS:
+        SESSIONS.move_to_end(sid)
+        return SESSIONS[sid]
+
+    sid = uuid.uuid4().hex
+    SESSIONS[sid] = new_session()
+    handler.new_sid = sid          # 交给 _send 去写 Set-Cookie
+    while len(SESSIONS) > MAX_SESSIONS:
+        SESSIONS.popitem(last=False)
+    return SESSIONS[sid]
 
 
 # ==================================================================
 # API 逻辑
 # ==================================================================
-def api_state():
+def api_state(session):
     return {
         "case": {
             "title": world.CASE["title"],
@@ -48,30 +70,30 @@ def api_state():
             {"name": name, "role": person["role"]}
             for name, person in world.PEOPLE.items()
         ],
-        "notebook": STATE["notebook"],
+        "notebook": session["notebook"],
     }
 
 
-def api_investigate(keyword):
+def api_investigate(session, keyword):
     hits = game.investigate(keyword)
     for line in hits:
-        if line not in STATE["notebook"]:
-            STATE["notebook"].append(line)
-    return {"hits": hits, "notebook": STATE["notebook"]}
+        if line not in session["notebook"]:
+            session["notebook"].append(line)
+    return {"hits": hits, "notebook": session["notebook"]}
 
 
-def api_talk(npc_name, message):
+def api_talk(session, npc_name, message):
     key = game.resolve_name(npc_name, npc.NPCS)
     if key is None:
         return {"error": f"没有叫 {npc_name!r} 的嫌疑人。"}
 
-    convo = STATE["conversations"].setdefault(
+    convo = session["conversations"].setdefault(
         key, [{"role": "system", "content": npc.build_npc_prompt(key)}]
     )
     convo.append({"role": "user", "content": message})
 
     # 确定性层：只有笔记本里真有这条证据，出示才有效
-    hits, gated = npc.check_pressure(key, message, "\n".join(STATE["notebook"]))
+    hits, gated = npc.check_pressure(key, message, "\n".join(session["notebook"]))
     for point in hits:
         convo.append({"role": "system", "content": point["reaction"]})
 
@@ -84,11 +106,11 @@ def api_talk(npc_name, message):
     return {"reply": reply, "pressure": [p["id"] for p in hits], "gated": gated}
 
 
-def api_profile(npc_name):
+def api_profile(session, npc_name):
     key = game.resolve_name(npc_name, world.PEOPLE)
     if key is None:
         return {"error": f"没有叫 {npc_name!r} 的嫌疑人。"}
-    line = game.view_profile(key, STATE["notebook"])
+    line = game.view_profile(key, session["notebook"])
     person = world.PEOPLE[key]
     return {
         "profile": {
@@ -99,15 +121,15 @@ def api_profile(npc_name):
             "note": person.get("note", ""),
         },
         "archive": line,
-        "notebook": STATE["notebook"],
+        "notebook": session["notebook"],
     }
 
 
-def api_accuse(npc_name):
+def api_accuse(session, npc_name):
     key = game.resolve_name(npc_name, world.PEOPLE)
     if key is None:
         return {"error": f"没有叫 {npc_name!r} 的嫌疑人。"}
-    ending = game.judge(key, STATE["notebook"])
+    ending = game.judge(key, session["notebook"])
     return {
         "ending": ending,
         "win": key == world.CASE["culprit"],
@@ -118,34 +140,34 @@ def api_accuse(npc_name):
 # ==================================================================
 # AI 侦探模式：agent 当侦探，玩家当嫌疑人
 # ==================================================================
-def _detective_session():
-    if DETECTIVE["session"] is None:
-        DETECTIVE["session"] = interrogation.new_session()
-    return DETECTIVE["session"]
+def _detective_session(session):
+    if session["detective"] is None:
+        session["detective"] = interrogation.new_session()
+    return session["detective"]
 
 
-def api_detective_start():
-    DETECTIVE["session"] = interrogation.new_session()
+def api_detective_start(session):
+    session["detective"] = interrogation.new_session()
     return {
         "brief": interrogation.PLAYER_BRIEF,
         "actions": [
             {"id": key, "label": act["label"], "desc": act["desc"]}
             for key, act in interrogation.ACTIONS.items()
         ],
-        "snapshot": interrogation.snapshot(DETECTIVE["session"]),
+        "snapshot": interrogation.snapshot(session["detective"]),
     }
 
 
-def api_detective_act(action_id):
-    return interrogation.do_action(_detective_session(), action_id)
+def api_detective_act(session, action_id):
+    return interrogation.do_action(_detective_session(session), action_id)
 
 
-def api_detective_advance():
-    return interrogation.advance(_detective_session())
+def api_detective_advance(session):
+    return interrogation.advance(_detective_session(session))
 
 
-def api_detective_answer(text):
-    return interrogation.answer(_detective_session(), text)
+def api_detective_answer(session, text):
+    return interrogation.answer(_detective_session(session), text)
 
 
 # ==================================================================
@@ -159,6 +181,16 @@ CONTENT_TYPES = {
 
 
 class Handler(BaseHTTPRequestHandler):
+    new_sid = None
+
+    def get_cookie(self, name):
+        raw = self.headers.get("Cookie", "") or ""
+        for part in raw.split(";"):
+            key, _, value = part.strip().partition("=")
+            if key == name:
+                return value
+        return None
+
     def _send(self, code, body, content_type="application/json"):
         if isinstance(body, (dict, list)):
             data = json.dumps(body, ensure_ascii=False).encode("utf-8")
@@ -167,6 +199,8 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(code)
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(data)))
+        if self.new_sid:
+            self.send_header("Set-Cookie", f"sid={self.new_sid}; Path=/; SameSite=Lax")
         self.end_headers()
         self.wfile.write(data)
 
@@ -191,7 +225,7 @@ class Handler(BaseHTTPRequestHandler):
         elif self.path == "/detective.js":
             self._serve_file("detective.js")
         elif self.path == "/api/state":
-            self._send(200, api_state())
+            self._send(200, api_state(get_session(self)))
         else:
             self._send(404, {"error": "not found"})
 
@@ -204,24 +238,26 @@ class Handler(BaseHTTPRequestHandler):
             self._send(400, {"error": "invalid JSON"})
             return
 
+        session = get_session(self)
+
         if self.path == "/api/investigate":
-            self._send(200, api_investigate(payload.get("keyword", "")))
+            self._send(200, api_investigate(session, payload.get("keyword", "")))
         elif self.path == "/api/profile":
-            self._send(200, api_profile(payload.get("npc", "")))
+            self._send(200, api_profile(session, payload.get("npc", "")))
         elif self.path == "/api/talk":
-            self._send(200, api_talk(payload.get("npc", ""), payload.get("message", "")))
+            self._send(200, api_talk(session, payload.get("npc", ""), payload.get("message", "")))
         elif self.path == "/api/accuse":
-            self._send(200, api_accuse(payload.get("npc", "")))
+            self._send(200, api_accuse(session, payload.get("npc", "")))
         elif self.path == "/api/detective/start":
-            self._send(200, api_detective_start())
+            self._send(200, api_detective_start(session))
         elif self.path == "/api/detective/act":
-            self._send(200, api_detective_act(payload.get("action", "")))
+            self._send(200, api_detective_act(session, payload.get("action", "")))
         elif self.path == "/api/detective/advance":
-            self._send(200, api_detective_advance())
+            self._send(200, api_detective_advance(session))
         elif self.path == "/api/detective/answer":
-            self._send(200, api_detective_answer(payload.get("text", "")))
+            self._send(200, api_detective_answer(session, payload.get("text", "")))
         elif self.path == "/api/reset":
-            reset_state()
+            reset_session(session)
             self._send(200, {"ok": True})
         else:
             self._send(404, {"error": "not found"})
@@ -232,9 +268,8 @@ class Handler(BaseHTTPRequestHandler):
 
 def main():
     llm.load_env()
-    reset_state()
     server = ThreadingHTTPServer(("0.0.0.0", PORT), Handler)
-    print(f"游戏已启动 → 浏览器打开 http://localhost:{PORT}")
+    print(f"游戏已启动 → http://localhost:{PORT}")
     print("（Ctrl+C 停止）")
     server.serve_forever()
 

@@ -79,6 +79,28 @@ python3 playtest.py     # 双模型自对弈：一个扮演侦探，一个扮演
 
 ---
 
+## 分享给别人玩
+
+游戏跑在本地，用 Cloudflare 的免费隧道就能拿到一个公网地址 ——
+不要服务器、不要备案、不要固定 IP。
+
+```bash
+./share.sh
+# 正在建立隧道…
+# 🎉 https://xxxx-xxxx-xxxx.trycloudflare.com
+```
+
+把这个地址发给别人，他们打开就能直接玩。
+
+> ⚠️ 三点注意
+> - 地址**每次启动都会变**，隧道只在你本机进程活着时有效
+> - 访客的每一次审讯都会消耗**你自己的模型 API 额度**
+> - 服务没有鉴权，别把地址长期公开挂着
+>
+> 同一个浏览器一个独立会话，多人同时玩不会互相打扰。
+
+---
+
 ## 工作原理
 
 ### Agent 循环
@@ -155,7 +177,8 @@ alibi/
 ├── playtest.py         双模型自对弈实验
 │
 ├── interrogation.py    AI 侦探模式：侦探提示词 + 玩家篡改 + 可暂停状态机
-├── server.py           Web 后端（标准库 http.server）
+├── server.py           Web 后端（标准库 http.server，按 cookie 隔离多会话）
+├── share.sh            一键用 Cloudflare 免费隧道把游戏分享到公网
 └── web/                前端（原生 HTML / CSS / JS，无构建步骤）
     ├── index.html · game.js · style.css          经典模式
     └── detective.html · detective.js             AI 侦探模式
