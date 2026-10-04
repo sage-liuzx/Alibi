@@ -57,13 +57,33 @@ async function api(path, body) {
 // ---------------- 初始化 ----------------
 async function init() {
   const state = await api("/api/state");
-  document.getElementById("case-title").textContent = state.case.title;
   document.getElementById("case-summary").textContent =
-    state.case.summary + "　案发时间：" + state.case.time;
+    state.case.title + "　" + state.case.summary + "　案发时间：" + state.case.time;
   notebook = state.notebook || [];
+  renderStageLink(state.cleared);
   renderTabs();
   renderScene(currentScene);
   renderNotebook();
+}
+
+// 第二关的锁：指认对真凶 + 拿出决定性证据之后才解开
+function renderStageLink(cleared) {
+  const link = document.getElementById("stage2-link");
+  if (!link) return;
+  if (cleared) {
+    link.textContent = "🔓 第二关 · 你是真凶 →";
+    link.classList.remove("locked");
+    link.classList.add("unlocked");
+    link.onclick = null;
+  } else {
+    link.textContent = "🔒 第二关 · 你是真凶";
+    link.classList.add("locked");
+    link.classList.remove("unlocked");
+    link.onclick = (e) => {
+      e.preventDefault();
+      alert("第二关还没解锁。\n\n先在这一关指认出真凶，并拿出决定性证据（机房 PIN 记录）。");
+    };
+  }
 }
 
 function renderTabs() {
@@ -235,6 +255,8 @@ async function accuse(name) {
   if (data.error) { alert(data.error); return; }
   document.getElementById("ending-title").textContent = data.win ? "🕵️ 真相大白" : "🔒 案件未破";
   document.getElementById("ending-text").textContent = data.ending;
+  document.getElementById("unlock-box").classList.toggle("hidden", !data.cleared);
+  renderStageLink(data.cleared);
   document.getElementById("ending").classList.remove("hidden");
 }
 

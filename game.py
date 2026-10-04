@@ -72,10 +72,20 @@ def investigate(keyword):
     return hits
 
 
+def key_evidence_found(notebook):
+    """决定性证据（机房 PIN 记录）是否已经进了笔记本。"""
+    return any("0104" in line for line in notebook)
+
+
+def is_solved(accused, notebook):
+    """是否真正破案：指认对了人 + 拿出了决定性证据。用来解锁第二关。"""
+    return accused == world.CASE["culprit"] and key_evidence_found(notebook)
+
+
 def judge(accused, notebook):
     """胜负判定。全部由 Python 决定，不经过 LLM。"""
     culprit = world.CASE["culprit"]
-    has_key_evidence = any("0104" in line for line in notebook)
+    has_key_evidence = key_evidence_found(notebook)
 
     if accused != culprit:
         return (

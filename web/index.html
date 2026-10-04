@@ -10,11 +10,11 @@
 
   <header class="topbar">
     <div>
-      <h1 id="case-title">Helios 数据失窃案</h1>
+      <h1><span class="stage-tag">第一关</span> 你是侦探</h1>
       <p id="case-summary"></p>
     </div>
     <div class="topbar-right">
-      <a class="ghost link" href="/detective.html">🤖 AI 侦探模式</a>
+      <a class="ghost link locked" id="stage2-link" href="/detective.html">🔒 第二关 · 你是真凶</a>
       <button class="ghost" onclick="showHelp()">❓ 怎么玩</button>
       <span class="clock">🕐 06-12 凌晨</span>
     </div>
@@ -83,6 +83,10 @@
     <div class="ending-box">
       <h2 id="ending-title"></h2>
       <p id="ending-text"></p>
+      <div id="unlock-box" class="unlock-box hidden">
+        <p class="unlock-tip">🔓 <b>第二关已解锁</b> —— 现在换你坐上嫌疑人的椅子。</p>
+        <button class="big" onclick="location.href='/detective.html'">进入第二关 · 你是真凶 →</button>
+      </div>
       <button onclick="restart()">重新开始</button>
     </div>
   </div>

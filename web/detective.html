@@ -3,23 +3,33 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>AI 侦探模式 · 你是嫌疑人</title>
+  <title>第二关 · 你是真凶 · Alibi</title>
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
 
   <header class="topbar">
     <div>
-      <h1>🤖 AI 侦探模式</h1>
+      <h1><span class="stage-tag">第二关</span> 你是真凶</h1>
       <p>这次 <b>agent 是侦探</b>，<b>你是真凶</b>。它自己决定问什么、查什么。</p>
     </div>
     <div class="topbar-right">
-      <a class="ghost link" href="/">← 回到侦探游戏</a>
+      <a class="ghost link" href="/">← 回到第一关</a>
     </div>
   </header>
 
+  <!-- 未解锁 -->
+  <section id="locked" class="det-wrap hidden">
+    <div class="locked-box">
+      <h2>🔒 这一关还没解锁</h2>
+      <p>先在第一关（<b>你是侦探</b>）指认出真凶，并拿出决定性证据。</p>
+      <p class="hint">倒过来玩会剧透第一关的悬念 —— 先破案，再来体验真凶视角。</p>
+      <a class="big-btn" href="/">← 去第一关破案</a>
+    </div>
+  </section>
+
   <!-- 阶段 1：准备 -->
-  <section id="prep" class="det-wrap">
+  <section id="prep" class="det-wrap hidden">
     <pre id="brief" class="brief"></pre>
     <h2>选择掩盖手段　剩余 <span id="prep-points" class="pts">3</span> 次</h2>
     <p class="hint">⚠️ 每次篡改都会留下审计痕迹 —— 侦探可能发现，并从备份恢复数据。想清楚再动手。</p>

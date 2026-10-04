@@ -32,13 +32,14 @@ SESSIONS = OrderedDict()
 # 会话管理
 # ==================================================================
 def new_session():
-    return {"notebook": [], "conversations": {}, "detective": None}
+    return {"notebook": [], "conversations": {}, "detective": None, "cleared": False}
 
 
 def reset_session(session):
     session["notebook"] = []
     session["conversations"] = {}
     session["detective"] = None
+    # cleared 故意不清空：第一关的通关进度要留着，否则重开一局就进不了第二关
 
 
 def get_session(handler):
@@ -71,6 +72,7 @@ def api_state(session):
             for name, person in world.PEOPLE.items()
         ],
         "notebook": session["notebook"],
+        "cleared": session["cleared"],
     }
 
 
@@ -129,10 +131,15 @@ def api_accuse(session, npc_name):
     key = game.resolve_name(npc_name, world.PEOPLE)
     if key is None:
         return {"error": f"没有叫 {npc_name!r} 的嫌疑人。"}
-    ending = game.judge(key, session["notebook"])
+
+    solved = game.is_solved(key, session["notebook"])
+    if solved:
+        session["cleared"] = True            # 第一关通关 → 解锁第二关
+
     return {
-        "ending": ending,
-        "win": key == world.CASE["culprit"],
+        "ending": game.judge(key, session["notebook"]),
+        "win": solved,
+        "cleared": session["cleared"],
         "culprit": world.CASE["culprit"],
     }
 
@@ -140,6 +147,14 @@ def api_accuse(session, npc_name):
 # ==================================================================
 # AI 侦探模式：agent 当侦探，玩家当嫌疑人
 # ==================================================================
+LOCKED_HINT = "先在第一关（你是侦探）找出真凶，并拿出决定性证据，才能进入真凶视角。"
+
+
+def _locked(session):
+    """第二关是关卡：没通关第一关就进不来。"""
+    return None if session["cleared"] else {"locked": True, "hint": LOCKED_HINT}
+
+
 def _detective_session(session):
     if session["detective"] is None:
         session["detective"] = interrogation.new_session()
@@ -147,6 +162,9 @@ def _detective_session(session):
 
 
 def api_detective_start(session):
+    blocked = _locked(session)
+    if blocked:
+        return blocked
     session["detective"] = interrogation.new_session()
     return {
         "brief": interrogation.PLAYER_BRIEF,
@@ -159,14 +177,23 @@ def api_detective_start(session):
 
 
 def api_detective_act(session, action_id):
+    blocked = _locked(session)
+    if blocked:
+        return blocked
     return interrogation.do_action(_detective_session(session), action_id)
 
 
 def api_detective_advance(session):
+    blocked = _locked(session)
+    if blocked:
+        return blocked
     return interrogation.advance(_detective_session(session))
 
 
 def api_detective_answer(session, text):
+    blocked = _locked(session)
+    if blocked:
+        return blocked
     return interrogation.answer(_detective_session(session), text)
 
 

@@ -16,6 +16,11 @@ async function api(path, body) {
 
 async function init() {
   const data = await api("/api/detective/start", {});
+  if (data.locked) {
+    document.getElementById("locked").classList.remove("hidden");
+    return;
+  }
+  document.getElementById("prep").classList.remove("hidden");
   document.getElementById("brief").textContent = data.brief;
   ACTIONS = data.actions;
   actionsLeft = data.snapshot.actions_left;
