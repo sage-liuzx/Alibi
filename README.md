@@ -14,6 +14,22 @@
 
 ---
 
+## 截图
+
+**① 案情简报** —— 开局先把案件、已知情况和 4 名嫌疑人交代清楚
+
+![案情简报](docs/01-briefing.webp)
+
+**② 第一关 · 你是侦探** —— 勘查现场、盘问嫌疑人、搜集证据，最后指认凶手
+
+![第一关 · 你是侦探](docs/02-stage1-detective.webp)
+
+**③ 第二关 · 你是真凶** —— 通关后解锁：Agent 当侦探，你当嫌疑人
+
+![第二关 · 你是真凶](docs/03-stage2-culprit.webp)
+
+---
+
 ## 玩法
 
 ### 第一关 · 你是侦探
@@ -183,6 +199,7 @@ alibi/
 ├── interrogation.py    第二关：侦探提示词 + 玩家篡改 + 可暂停状态机
 ├── server.py           Web 后端（标准库 http.server，按 cookie 隔离多会话 + 关卡解锁）
 ├── share.sh            一键用 Cloudflare 免费隧道把游戏分享到公网
+├── docs/               README 截图（WebP，已压缩）
 └── web/                前端（原生 HTML / CSS / JS，无构建步骤）
     ├── index.html · game.js · style.css          第一关
     └── detective.html · detective.js             第二关
